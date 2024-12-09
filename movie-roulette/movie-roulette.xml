@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Movie-Roulette</Name>
+  <Repository>ghcr.io/sahara101/movie-roulette:latest</Repository>
+  <Registry>https://ghcr.io/sahara101/movie-roulette</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Project>https://github.com/sahara101/Movie-Roulette</Project>
+  <Overview>Can't decide what to watch? Movie Roulette helps you pick random movies from your Plex and/or Jellyfin libraries, with features like cinema poster mode, service integrations, and device control.</Overview>
+  <Category>Tools: MediaApp:Video MediaServer:Video Status:Stable</Category>
+  <WebUI>http://[IP]:[PORT:4000]</WebUI>
+  <TemplateURL/>
+  <Icon>https://raw.githubusercontent.com/sahara101/Movie-Roulette/refs/heads/main/static/icons/icon-512x512.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1733750109</DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="settings" Target="/app/data" Default="/mnt/user/appdata/movie-roulette" Mode="rw" Description="" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/movie-roulette</Config>
+  <Config Name="Web Port" Target="4000" Default="4000" Mode="tcp" Description="" Type="Port" Display="always" Required="false" Mask="false">4000</Config>
+</Container>
