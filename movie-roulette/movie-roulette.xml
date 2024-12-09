@@ -7,7 +7,7 @@
   <MyIP/>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
-  <Support/>
+  <Support>https://github.com/sahara101/Movie-Roulette/issues</Support>
   <Project>https://github.com/sahara101/Movie-Roulette</Project>
   <Overview>Can't decide what to watch? Movie Roulette helps you pick random movies from your Plex and/or Jellyfin libraries, with features like cinema poster mode, service integrations, and device control.</Overview>
   <Category>Tools: MediaApp:Video MediaServer:Video Status:Stable</Category>
@@ -17,7 +17,7 @@
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
-  <DateInstalled>1733750109</DateInstalled>
+  <DateInstalled>1733751066</DateInstalled>
   <DonateText/>
   <DonateLink/>
   <Requires/>
