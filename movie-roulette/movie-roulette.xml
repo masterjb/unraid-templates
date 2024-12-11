@@ -17,10 +17,10 @@
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
-  <DateInstalled>1733918112</DateInstalled>
+  <DateInstalled>1733918288</DateInstalled>
   <DonateText/>
   <DonateLink/>
   <Requires/>
   <Config Name="settings" Target="/app/data" Default="/mnt/user/appdata/movie-roulette" Mode="rw" Description="" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/movie-roulette</Config>
-  <Config Name="Web Port" Target="4000" Default="4000" Mode="tcp" Description="" Type="Port" Display="always" Required="false" Mask="false">4000</Config>
+  <Config Name="WebUI Port" Target="4000" Default="4000" Mode="tcp" Description="" Type="Port" Display="always" Required="false" Mask="false">4000</Config>
 </Container>
