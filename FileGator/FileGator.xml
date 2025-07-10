@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>FileGator</Name>
+  <Repository>filegator/filegator:latest-multiarch</Repository>
+  <Registry/>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Project/>
+  <Overview>visit: http://127.0.0.1:8080 login as admin/admin123</Overview>
+  <Category>Cloud: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8080]</WebUI>
+  <TemplateURL/>
+  <Icon>https://i.imgur.com/U5sPYdP.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1752177244</DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="WebUI Port" Target="8080" Default="8080" Mode="tcp" Description="" Type="Port" Display="always" Required="false" Mask="false">8080</Config>
+  <Config Name="Data Path" Target="/var/www/filegator/repository" Default="/mnt/user/" Mode="rw" Description="/mnt/user/...." Type="Path" Display="always" Required="false" Mask="false">/mnt/user/</Config>
+  <TailscaleStateDir/>
+</Container>
