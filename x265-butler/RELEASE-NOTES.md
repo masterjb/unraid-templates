@@ -49,7 +49,8 @@ GitLab CI pipeline (M1 v1.5.0 historical reference): https://gitlab.com/MisterJB
 
 ### Forum / discussion
 
-unRAID forum support thread: see this CA template's `<Support>` field, or search "x265-butler" on forums.unraid.net.
+unRAID forum support thread (umbrella for all `masterjb` docker templates):
+https://forums.unraid.net/topic/182094-support-human-126094-docker-templates/
 
 ---
 

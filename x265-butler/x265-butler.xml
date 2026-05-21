@@ -7,7 +7,7 @@
   <MyIP/>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
-  <Support>https://forums.unraid.net/topic/REPLACE-WITH-ACTUAL-THREAD-ID-x265-butler/</Support>
+  <Support>https://forums.unraid.net/topic/182094-support-human-126094-docker-templates/</Support>
   <Project>https://github.com/masterjb/unraid-templates</Project>
   <Overview>
     x265-butler reclaims disk space on unRAID by automatically transcoding video files
