@@ -17,12 +17,9 @@ on:
 #                           `/users/{user}/packages/container/{pkg}/versions`
 #                           — REQUIRED (M1); without it the tag-fetch 403s.
 # No PAT introduced. GITHUB_TOKEN with documented scopes only.
+# Block lives at job-level (NOT workflow-level) per AC-1 verify-grep
+# `^      packages: read` — 6-space indent under `jobs.poll-and-bump:`.
 # ---------------------------------------------------------------------------
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
-  packages: read           # audit-added: M1 — required for GHCR tag-fetch
 
 concurrency:
   group: x265-butler-tag-bump
@@ -36,6 +33,11 @@ jobs:
     if: ${{ vars.DISABLE_BUMP != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      packages: read           # audit-added: M1 — required for GHCR tag-fetch
     env:
       GHCR_PKG_OWNER: masterjb
       GHCR_PKG_NAME: x265-butler
