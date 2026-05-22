@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>x265-butler</Name>
-  <Repository>ghcr.io/masterjb/x265-butler:2.13.0</Repository>
+  <Repository>ghcr.io/masterjb/x265-butler:latest</Repository>
   <Registry>https://github.com/users/masterjb/packages/container/package/x265-butler</Registry>
   <Network>bridge</Network>
   <MyIP/>
@@ -21,6 +21,13 @@
     &#xD;
     See full release notes for v2.13.0 highlights:&#xD;
     https://github.com/masterjb/unraid-templates/blob/main/x265-butler/RELEASE-NOTES.md&#xD;
+    &#xD;
+    [!] Auto-update notice: This template now uses the :latest image tag,&#xD;
+    which auto-deploys every release including potentially-breaking Major&#xD;
+    version transitions (v2.x to v3.x). For production stability, edit the&#xD;
+    Container's Repository field to pin an exact version (e.g.&#xD;
+    ghcr.io/masterjb/x265-butler:2.16.0). Release notes for every version:&#xD;
+    https://gitlab.com/MisterJB/x265-butler/-/releases&#xD;
     &#xD;
     Live release feed (all versions):&#xD;
     https://gitlab.com/MisterJB/x265-butler/-/releases
