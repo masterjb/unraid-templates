@@ -20,7 +20,10 @@
     Storage-Analyzer / Auto-Scan-on-Change.&#xD;
     &#xD;
     See full release notes for v2.13.0 highlights:&#xD;
-    https://github.com/masterjb/unraid-templates/blob/main/x265-butler/RELEASE-NOTES.md
+    https://github.com/masterjb/unraid-templates/blob/main/x265-butler/RELEASE-NOTES.md&#xD;
+    &#xD;
+    Live release feed (all versions):&#xD;
+    https://gitlab.com/MisterJB/x265-butler/-/releases
   </Overview>
   <Category>MediaApp:Video Productivity:</Category>
   <WebUI>http://[IP]:[PORT:3000]/</WebUI>
@@ -36,6 +39,7 @@
     HEVC transcoding for unRAID — set-and-forget background re-encode of your library
     shares to x265. Dashboard, encoder benchmarks, profile editor, auto-scan, multi-share.
     See RELEASE-NOTES.md for the full v2.13.0 changelog (M2 v2.0 Polish + Power close).
+    Current changelog: https://gitlab.com/MisterJB/x265-butler/-/releases
   </Description>
   <Version>2.13.0</Version>
   <Date>2026-05-21</Date>
