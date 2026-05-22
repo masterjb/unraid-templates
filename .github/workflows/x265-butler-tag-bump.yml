@@ -1,0 +1,367 @@
+name: x265-butler — CA template tag-bump
+
+on:
+  schedule:
+    - cron: '0 4 * * *'   # daily 04:00 UTC
+  workflow_dispatch: {}    # manual smoke-test
+
+# ---------------------------------------------------------------------------
+# Permissions scope rationale (audit-added: SR8):
+#   contents: write       - commit `.github/.x265-butler-tag-bump-fail-counter`
+#                           to main with `[skip ci]` (M2 file-counter path)
+#                           AND create PR branch via peter-evans action.
+#   pull-requests: write  - open / update auto-PR via peter-evans@v6.
+#   issues: write         - open auto-Issue on 7-day fail-streak + close it
+#                           on recovery (AC-4 dedup contract, SR3).
+#   packages: read        - call GHCR Container-Tags v2 API + GitHub REST
+#                           `/users/{user}/packages/container/{pkg}/versions`
+#                           — REQUIRED (M1); without it the tag-fetch 403s.
+# No PAT introduced. GITHUB_TOKEN with documented scopes only.
+# Block lives at job-level (NOT workflow-level) per AC-1 verify-grep
+# `^      packages: read` — 6-space indent under `jobs.poll-and-bump:`.
+# ---------------------------------------------------------------------------
+
+concurrency:
+  group: x265-butler-tag-bump
+  cancel-in-progress: false
+
+jobs:
+  poll-and-bump:
+    # Emergency kill-switch (audit-added: SR2 / AC-9). To disable temporarily:
+    #   gh variable set DISABLE_BUMP --body=true --repo masterjb/unraid-templates
+    # To re-enable: `gh variable delete DISABLE_BUMP --repo masterjb/unraid-templates`
+    if: ${{ vars.DISABLE_BUMP != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      packages: read           # audit-added: M1 — required for GHCR tag-fetch
+    env:
+      GHCR_PKG_OWNER: masterjb
+      GHCR_PKG_NAME: x265-butler
+      TEMPLATE_PATH: x265-butler/x265-butler.xml
+      GITLAB_PROJECT: MisterJB/x265-butler
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Fetch highest GHCR semver tag (with silent retry)
+        id: ghcr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set +e
+          set +x  # audit-added: SR6 — token-bearing call; never trace
+          # PREFERRED endpoint (audit-added: M1): GitHub REST API
+          #   GET /users/${GHCR_PKG_OWNER}/packages/container/${GHCR_PKG_NAME}/versions
+          # `gh api` handles auth via GH_TOKEN under `packages: read` scope.
+          # Filter semver regex `^[0-9]+\.[0-9]+\.[0-9]+$` (audit-added: AC-10
+          # strips floating-majors like `:2` AND prereleases like `2.16.0-rc1`).
+
+          ERROR_FILE=$(mktemp)
+          BODY_FILE=$(mktemp)
+
+          gh api -H "Accept: application/vnd.github+json" \
+            --paginate \
+            "/users/${GHCR_PKG_OWNER}/packages/container/${GHCR_PKG_NAME}/versions" \
+            >"$BODY_FILE" 2>"$ERROR_FILE"
+          RC=$?
+
+          if [ "$RC" -ne 0 ]; then
+            # gh exit codes: 4 = HTTP 4xx (incl. 401/403); other = transient
+            ERR_EXCERPT=$(head -c 500 "$ERROR_FILE" | tr '\n' ' ' | tr -d '\r')
+            if echo "$ERR_EXCERPT" | grep -qE '(HTTP 401|HTTP 403)'; then
+              echo "::error::auth-scope-error: $ERR_EXCERPT"
+            fi
+            {
+              echo "failed=true"
+              echo "latest="
+              printf 'error<<__ERR_EOF__\n%s\n__ERR_EOF__\n' "$ERR_EXCERPT"
+            } >>"$GITHUB_OUTPUT"
+            rm -f "$BODY_FILE" "$ERROR_FILE"
+            exit 0
+          fi
+
+          # Extract all tags, filter strict semver, sort, take highest.
+          LATEST=$(jq -r '.[].metadata.container.tags[]?' "$BODY_FILE" \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V \
+            | tail -n 1)
+
+          if [ -z "$LATEST" ]; then
+            echo "::error::malformed-tag: no strict-semver tag found in GHCR versions response"
+            {
+              echo "failed=true"
+              echo "latest="
+              echo "error=no-semver-tag-found"
+            } >>"$GITHUB_OUTPUT"
+            rm -f "$BODY_FILE" "$ERROR_FILE"
+            exit 0
+          fi
+
+          # Defense-in-depth: re-validate against semver regex BEFORE any further use.
+          if ! printf '%s' "$LATEST" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::malformed-tag"
+            {
+              echo "failed=true"
+              echo "latest="
+              echo "error=malformed-tag-post-filter"
+            } >>"$GITHUB_OUTPUT"
+            rm -f "$BODY_FILE" "$ERROR_FILE"
+            exit 0
+          fi
+
+          {
+            echo "failed=false"
+            echo "latest=${LATEST}"
+            echo "error="
+          } >>"$GITHUB_OUTPUT"
+          rm -f "$BODY_FILE" "$ERROR_FILE"
+
+      - name: Read current <Repository> tag from XML
+        if: steps.ghcr.outputs.failed == 'false'
+        id: xml
+        shell: bash
+        run: |
+          set -euo pipefail
+          CURRENT=$(grep -oE 'ghcr\.io/masterjb/x265-butler:[0-9]+\.[0-9]+\.[0-9]+' \
+            "${TEMPLATE_PATH}" | head -n 1 | sed 's|.*:||')
+          if [ -z "$CURRENT" ]; then
+            echo "::error::could not parse <Repository> tag from ${TEMPLATE_PATH}"
+            exit 1
+          fi
+          echo "current=${CURRENT}" >>"$GITHUB_OUTPUT"
+
+      - name: Diff Major versions + decide
+        if: steps.ghcr.outputs.failed == 'false'
+        id: decide
+        shell: bash
+        run: |
+          set -euo pipefail
+          LATEST="${{ steps.ghcr.outputs.latest }}"
+          CURRENT="${{ steps.xml.outputs.current }}"
+          LATEST_MAJOR=$(printf '%s' "$LATEST" | awk -F. '{print $1}')
+          CURRENT_MAJOR=$(printf '%s' "$CURRENT" | awk -F. '{print $1}')
+          if [ "$LATEST_MAJOR" -gt "$CURRENT_MAJOR" ]; then
+            echo "action=bump" >>"$GITHUB_OUTPUT"
+          elif [ "$LATEST_MAJOR" -eq "$CURRENT_MAJOR" ]; then
+            echo "action=noop" >>"$GITHUB_OUTPUT"
+          else
+            echo "action=warn-downgrade" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch GitLab Releases description (changelog excerpt)
+        if: steps.decide.outputs.action == 'bump'
+        id: changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x  # audit-added: SR6 — never trace token-bearing curl invocations
+          # GitLab Releases API endpoint (anonymous works for public projects):
+          #   GET https://gitlab.com/api/v4/projects/<URL-ENC>/releases/v<TAG>
+          # URL-encode `MisterJB/x265-butler` to `MisterJB%2Fx265-butler`.
+          PROJECT_ENC=$(printf '%s' "$GITLAB_PROJECT" | sed 's|/|%2F|g')
+          LATEST="${{ steps.ghcr.outputs.latest }}"
+          URL="https://gitlab.com/api/v4/projects/${PROJECT_ENC}/releases/v${LATEST}"
+
+          HTTP_STATUS=$(curl --silent --max-time 30 --retry 3 --retry-delay 5 \
+            --write-out '%{http_code}' --output /tmp/release-body.json "$URL" || echo "000")
+
+          # Audit-added: M4 — explicit 404 handling (Release-page race with GHCR push).
+          if [ "$HTTP_STATUS" = "404" ]; then
+            EXCERPT="(GitLab Release page not yet published — see https://gitlab.com/MisterJB/x265-butler/-/releases)"
+          elif [ "$HTTP_STATUS" = "200" ]; then
+            # jq -r '.description' extracts release-notes body; head -15 caps length.
+            # Audit-added: M3 — unique tilde-fence prevents collision with embedded ``` fences.
+            EXCERPT=$(jq -r '.description // ""' /tmp/release-body.json | head -n 15)
+            EXCERPT=$(printf '%s' "$EXCERPT" | sed 's/[[:space:]]*$//')
+            [ -z "$EXCERPT" ] && EXCERPT="(empty release-notes body)"
+          else
+            EXCERPT="(GitLab Releases API returned HTTP ${HTTP_STATUS} — retry on next scheduled run)"
+          fi
+
+          # Audit-added: SR1 — explicit multi-line $GITHUB_OUTPUT heredoc with
+          # random delimiter (prevents collision if EXCERPT contains the delimiter).
+          DELIM="EXCERPT_$(uuidgen | tr -d -)"
+          {
+            printf 'excerpt<<%s\n' "$DELIM"
+            printf '%s\n' "$EXCERPT"
+            printf '%s\n' "$DELIM"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Patch XML <Repository> and <Version>
+        if: steps.decide.outputs.action == 'bump'
+        shell: bash
+        run: |
+          set -euo pipefail
+          LATEST="${{ steps.ghcr.outputs.latest }}"
+          # Anchored regex (audit-added: AC-10 / SR5 — no unanchored fragments).
+          sed -E -i \
+            "s|<Repository>ghcr\.io/masterjb/x265-butler:[0-9]+\.[0-9]+\.[0-9]+</Repository>|<Repository>ghcr.io/masterjb/x265-butler:${LATEST}</Repository>|" \
+            "${TEMPLATE_PATH}"
+          sed -E -i \
+            "s|<Version>[0-9]+\.[0-9]+\.[0-9]+</Version>|<Version>${LATEST}</Version>|" \
+            "${TEMPLATE_PATH}"
+
+          # AC-2: post-edit verify both new tags appear exactly once.
+          REPO_HITS=$(grep -c "<Repository>ghcr.io/masterjb/x265-butler:${LATEST}</Repository>" "${TEMPLATE_PATH}" || true)
+          VER_HITS=$(grep -c "<Version>${LATEST}</Version>" "${TEMPLATE_PATH}" || true)
+          if [ "${REPO_HITS}" != "1" ] || [ "${VER_HITS}" != "1" ]; then
+            echo "::error::post-edit verify failed: repo=${REPO_HITS} ver=${VER_HITS}"
+            exit 1
+          fi
+
+          # Well-formedness check.
+          if command -v xmllint >/dev/null 2>&1; then
+            xmllint --noout "${TEMPLATE_PATH}"
+          else
+            python3 -c "import xml.etree.ElementTree as ET; ET.parse('${TEMPLATE_PATH}')"
+          fi
+
+      - name: Capture audit-trail metadata
+        if: steps.decide.outputs.action == 'bump'
+        id: audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          # audit-added: SR4 — immutable evidence for PR body
+          echo "iso8601=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >>"$GITHUB_OUTPUT"
+          echo "workflow_sha=$(git rev-parse HEAD:.github/workflows/x265-butler-tag-bump.yml)" >>"$GITHUB_OUTPUT"
+
+      - name: Open auto-PR
+        if: steps.decide.outputs.action == 'bump'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: auto/x265-butler-bump-v${{ steps.ghcr.outputs.latest }}
+          base: main
+          commit-message: |
+            chore(x265-butler): bump CA template to v${{ steps.ghcr.outputs.latest }}
+
+            Major-version transition detected by scheduled poll.
+          title: 'chore(x265-butler): bump CA template to v${{ steps.ghcr.outputs.latest }}'
+          body: |
+            ### Version Transition
+            v${{ steps.xml.outputs.current }} → v${{ steps.ghcr.outputs.latest }}
+
+            ### GitLab Releases
+            https://gitlab.com/MisterJB/x265-butler/-/releases/v${{ steps.ghcr.outputs.latest }}
+
+            ### Changelog Excerpt
+            <!-- audit-added: M3 — tilde-fence prevents collision with embedded ``` fences -->
+            ~~~changelog-excerpt~~~
+            ${{ steps.changelog.outputs.excerpt }}
+            ~~~changelog-excerpt~~~
+
+            ### Reviewer Checklist (Pre-Merge MUST — all 4 required)
+            - [ ] Tag-bump in `<Repository>` and `<Version>` correct
+            - [ ] No breaking template-changes needed (env vars / ports / volumes still compatible)
+            - [ ] `RELEASE-NOTES.md` mirror updated separately if desired
+            - [ ] Changelog excerpt rendered cleanly (tilde-fence intact; no broken Markdown)
+
+            ### Audit-Trail
+            <!-- audit-added: SR4 — immutable evidence beyond 90-day GHA UI retention -->
+            - Run: ${{ github.run_id }}
+            - Triggered: ${{ github.event_name }}
+            - Detected: v${{ steps.xml.outputs.current }} → v${{ steps.ghcr.outputs.latest }}
+            - Timestamp: ${{ steps.audit.outputs.iso8601 }}
+            - Workflow-File-SHA: ${{ steps.audit.outputs.workflow_sha }}
+          labels: |
+            automated
+            x265-butler
+
+      # ------------------------------------------------------------------------
+      # File-committed fail-counter (audit-added: M2 + SR3)
+      # Repository-variable path REMOVED — GITHUB_TOKEN lacks administration:write.
+      # Counter lives at `.github/.x265-butler-tag-bump-fail-counter` (ASCII int + \n).
+      # ------------------------------------------------------------------------
+      - name: Reset fail-counter on success (no open Issue)
+        if: steps.ghcr.outputs.failed == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x  # audit-added: SR6
+          COUNTER_FILE=".github/.x265-butler-tag-bump-fail-counter"
+          ISSUE_TITLE="[x265-butler-tag-bump] 7-day GHCR poll failure streak"
+
+          # Audit-added: SR3 — recovery-comment + close-issue-on-recovery branch.
+          OPEN_ISSUE=$(gh issue list --state open --search "in:title \"${ISSUE_TITLE}\"" --json number --jq '.[0].number // empty' || true)
+          if [ -n "${OPEN_ISSUE:-}" ]; then
+            gh issue comment "$OPEN_ISSUE" --body "Recovered on run ${{ github.run_id }}"
+            gh issue close "$OPEN_ISSUE"
+          fi
+
+          # Reset counter to 0 (no-op if already 0; idempotent).
+          if [ -f "$COUNTER_FILE" ] && [ "$(cat "$COUNTER_FILE")" != "0" ]; then
+            echo "0" >"$COUNTER_FILE"
+            git -c user.name='github-actions[bot]' \
+                -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+                add "$COUNTER_FILE"
+            git -c user.name='github-actions[bot]' \
+                -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+                commit -m "chore(x265-butler-tag-bump): reset fail-counter [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Increment fail-counter + check 7-day threshold
+        if: steps.ghcr.outputs.failed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x  # audit-added: SR6
+          COUNTER_FILE=".github/.x265-butler-tag-bump-fail-counter"
+          ISSUE_TITLE="[x265-butler-tag-bump] 7-day GHCR poll failure streak"
+
+          # Read + increment (file-default 0 if absent).
+          if [ -f "$COUNTER_FILE" ]; then
+            CURRENT=$(cat "$COUNTER_FILE")
+          else
+            CURRENT=0
+          fi
+          NEXT=$((CURRENT + 1))
+          echo "$NEXT" >"$COUNTER_FILE"
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              add "$COUNTER_FILE"
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m "chore(x265-butler-tag-bump): increment fail-counter to ${NEXT} [skip ci]"
+          git push origin HEAD:main
+
+          # Audit-added: SR3 — open-Issue dedup: do NOT reset counter while Issue open;
+          # only create fresh Issue if none currently open with that exact title.
+          if [ "$NEXT" -ge 7 ]; then
+            OPEN_ISSUE=$(gh issue list --state open --search "in:title \"${ISSUE_TITLE}\"" --json number --jq '.[0].number // empty' || true)
+            if [ -z "${OPEN_ISSUE:-}" ]; then
+              ERR_BODY="${{ steps.ghcr.outputs.error }}"
+              gh issue create \
+                --title "$ISSUE_TITLE" \
+                --body "Fail-counter reached ${NEXT} consecutive days. Last error excerpt: ${ERR_BODY}. Last run: ${{ github.run_id }}." \
+                --label "automated,bug"
+              # Reset counter only after fresh Issue creation.
+              echo "0" >"$COUNTER_FILE"
+              git -c user.name='github-actions[bot]' \
+                  -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+                  add "$COUNTER_FILE"
+              git -c user.name='github-actions[bot]' \
+                  -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+                  commit -m "chore(x265-butler-tag-bump): reset fail-counter after Issue created [skip ci]"
+              git push origin HEAD:main
+            fi
+            # If Issue already open: counter continues incrementing (evidence preserved).
+          fi
+
+      - name: Warn on downgrade
+        if: steps.decide.outputs.action == 'warn-downgrade'
+        shell: bash
+        run: |
+          echo "::warning::Detected downgrade — latest=${{ steps.ghcr.outputs.latest }} < current=${{ steps.xml.outputs.current }}. No action taken."
