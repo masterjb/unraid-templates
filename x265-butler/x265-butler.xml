@@ -8,18 +8,18 @@
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
   <Support>https://forums.unraid.net/topic/182094-support-human-126094-docker-templates/</Support>
-  <Project>https://github.com/masterjb/unraid-templates</Project>
+  <Project>https://github.com/masterjb/x265-butler</Project>
   <Overview>
     x265-butler reclaims disk space on unRAID by automatically transcoding video files
     to HEVC (x265). Scans library shares for non-x265 files, transcodes them in the
     background using ffmpeg, tracks results in a dashboard, and never re-encodes the
     same file twice. Lighter-weight than Tdarr / FileFlows / Unmanic.&#xD;
     &#xD;
-    M2 v2.0 Polish + Power closes 2026-05-21: Stats + Dashboard / UI Redesign /&#xD;
+    Recent highlights: Stats + Dashboard / UI Redesign /&#xD;
     Encoder-Benchmark with Pareto-Frontier / Encoder-Profile-Editor / Multi-Share /&#xD;
     Storage-Analyzer / Auto-Scan-on-Change.&#xD;
     &#xD;
-    See full release notes for v2.13.0 highlights:&#xD;
+    See full release notes:&#xD;
     https://github.com/masterjb/unraid-templates/blob/main/x265-butler/RELEASE-NOTES.md&#xD;
     &#xD;
     [!] Auto-update notice: This template now uses the :latest image tag,&#xD;
@@ -27,10 +27,10 @@
     version transitions (v2.x to v3.x). For production stability, edit the&#xD;
     Container's Repository field to pin an exact version (e.g.&#xD;
     ghcr.io/masterjb/x265-butler:2.16.0). Release notes for every version:&#xD;
-    https://gitlab.com/MisterJB/x265-butler/-/releases&#xD;
+    https://github.com/masterjb/x265-butler/blob/main/CHANGELOG.md&#xD;
     &#xD;
     Live release feed (all versions):&#xD;
-    https://gitlab.com/MisterJB/x265-butler/-/releases
+    https://github.com/masterjb/x265-butler/blob/main/CHANGELOG.md
   </Overview>
   <Category>MediaApp:Video Productivity:</Category>
   <WebUI>http://[IP]:[PORT:3000]/</WebUI>
@@ -45,11 +45,11 @@
   <Description>
     HEVC transcoding for unRAID — set-and-forget background re-encode of your library
     shares to x265. Dashboard, encoder benchmarks, profile editor, auto-scan, multi-share.
-    See RELEASE-NOTES.md for the full v2.13.0 changelog (M2 v2.0 Polish + Power close).
-    Current changelog: https://gitlab.com/MisterJB/x265-butler/-/releases
+    See RELEASE-NOTES.md for the full changelog.
+    Current changelog: https://github.com/masterjb/x265-butler/blob/main/CHANGELOG.md
   </Description>
-  <Version>2.13.0</Version>
-  <Date>2026-05-21</Date>
+  <Version>2.20.0</Version>
+  <Date>2026-05-30</Date>
   <Changes>https://github.com/masterjb/unraid-templates/blob/main/x265-butler/RELEASE-NOTES.md</Changes>
   <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="HTTP port for the x265-butler dashboard" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
   <Config Name="Library" Target="/library" Default="/mnt/user/Media" Mode="rw" Description="Path containing video files to scan + transcode" Type="Path" Display="always" Required="true" Mask="false"/>
