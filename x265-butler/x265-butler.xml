@@ -47,8 +47,8 @@
     shares to x265. Dashboard, encoder benchmarks, profile editor, auto-scan, multi-share.
     Full changelog: https://github.com/masterjb/x265-butler/blob/main/CHANGELOG.md
   </Description>
-  <Version>2.28.0</Version>
-  <Date>2026-06-14</Date>
+  <Version>2.29.0</Version>
+  <Date>2026-06-18</Date>
   <Changes>https://github.com/masterjb/x265-butler/blob/main/CHANGELOG.md</Changes>
   <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="HTTP port for the x265-butler dashboard" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
   <Config Name="Library" Target="/library" Default="/mnt/user/Media" Mode="rw" Description="Path containing video files to scan + transcode" Type="Path" Display="always" Required="true" Mask="false"/>
