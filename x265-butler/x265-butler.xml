@@ -43,16 +43,17 @@
   <DonateText/>
   <DonateLink/>
   <Description>
-    HEVC transcoding for unRAID — set-and-forget background re-encode of your library
+    HEVC transcoding for unRAID: set-and-forget background re-encode of your library
     shares to x265. Dashboard, encoder benchmarks, profile editor, auto-scan, multi-share.
     Full changelog: https://github.com/masterjb/x265-butler/blob/main/CHANGELOG.md
   </Description>
-  <Version>2.51.0</Version>
-  <Date>2026-10-04</Date>
+  <Version>2.52.0</Version>
+  <Date>2026-10-06</Date>
   <Changes>https://github.com/masterjb/x265-butler/blob/main/CHANGELOG.md</Changes>
   <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="HTTP port for the x265-butler dashboard" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
-  <Config Name="Library" Target="/library" Default="/mnt/user/Media" Mode="rw" Description="Path containing video files to scan + transcode" Type="Path" Display="always" Required="true" Mask="false"/>
-  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/x265-butler" Mode="rw" Description="Persistent config + database directory" Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="Media" Target="/media" Default="/mnt/user/Media" Mode="rw" Description="Your media share. Butler scans it and writes the HEVC file into the same folder as the original, so it needs read and write access. Installs from an older template that use /library keep working unchanged." Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="AppData" Target="/config" Default="/mnt/user/appdata/x265-butler" Mode="rw" Description="Database, settings and a cache subfolder for encode scratch space and job logs. Called Config in versions before 2.52: same path, nothing to change. To put the cache on a fast pool, set Cache Pool below." Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="Cache Pool (optional)" Target="/cache" Default="" Mode="rw" Description="Optional. Leave empty to keep the cache inside AppData. Point it at a fast SSD pool, e.g. /mnt/cache/x265-butler." Type="Path" Display="always" Required="false" Mask="false"/>
   <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID (typically 99 on unRAID)" Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
   <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID (typically 100 on unRAID)" Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
   <Config Name="TZ" Target="TZ" Default="Europe/Berlin" Mode="" Description="Container timezone" Type="Variable" Display="advanced" Required="false" Mask="false">Europe/Berlin</Config>
