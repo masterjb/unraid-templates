@@ -15,6 +15,9 @@
     background using ffmpeg, tracks results in a dashboard, and never re-encodes the
     same file twice. Lighter-weight than Tdarr / FileFlows / Unmanic.&#xD;
     &#xD;
+    Setup guide (install, updates, GPU):&#xD;
+    https://gitlab.com/MisterJB/x265-butler/-/blob/main/docs/user/README.md&#xD;
+    &#xD;
     [!] Images moved to the GitLab registry with v2.54.0. Installs from before&#xD;
     must change the Repository field to registry.gitlab.com/misterjb/x265-butler:latest&#xD;
     to keep receiving updates; the old ghcr.io image stays at 2.53.0.&#xD;
@@ -23,19 +26,17 @@
     Encoder-Benchmark with Pareto-Frontier / Encoder-Profile-Editor / Multi-Share /&#xD;
     Storage-Analyzer / Auto-Scan-on-Change.&#xD;
     &#xD;
-    See full release notes:&#xD;
-    https://gitlab.com/MisterJB/x265-butler/-/releases&#xD;
-    &#xD;
-    [!] Auto-update notice: This template now uses the :latest image tag,&#xD;
-    which auto-deploys every release including potentially-breaking Major&#xD;
-    version transitions (v2.x to v3.x). For production stability, edit the&#xD;
-    Container's Repository field to pin an exact version (e.g.&#xD;
-    registry.gitlab.com/misterjb/x265-butler:X.Y.Z, with X.Y.Z a version from the releases page).&#xD;
     Release notes for every version:&#xD;
     https://gitlab.com/MisterJB/x265-butler/-/releases&#xD;
     &#xD;
-    Live release feed (all versions):&#xD;
-    https://gitlab.com/MisterJB/x265-butler/-/releases
+    [!] Image tag: we strongly recommend keeping the :latest tag in the Repository&#xD;
+    field. Fixes only ship in new releases,&#xD;
+    older version tags are removed from the registry over time,&#xD;
+    and unRAID shows update notices only for :latest. Read the&#xD;
+    release notes before a major upgrade (v2.x to v3.x). A version tag&#xD;
+    (registry.gitlab.com/misterjb/x265-butler:X.Y.Z) is only a short way back to the&#xD;
+    previous release: back up your AppData folder first and switch back to :latest&#xD;
+    once a fix is out.
   </Overview>
   <Category>MediaApp:Video Productivity:</Category>
   <WebUI>http://[IP]:[PORT:3000]/</WebUI>
@@ -52,8 +53,8 @@
     shares to x265. Dashboard, encoder benchmarks, profile editor, auto-scan, multi-share.
     Full changelog: https://gitlab.com/MisterJB/x265-butler/-/releases
   </Description>
-  <Version>2.54.0</Version>
-  <Date>2026-10-07</Date>
+  <Version>2.55.0</Version>
+  <Date>2026-10-08</Date>
   <Changes>https://gitlab.com/MisterJB/x265-butler/-/releases</Changes>
   <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="HTTP port for the x265-butler dashboard" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
   <Config Name="Media" Target="/media" Default="/mnt/user/Media" Mode="rw" Description="Your media share. Butler scans it and writes the HEVC file into the same folder as the original, so it needs read and write access. Installs from an older template that use /library keep working unchanged." Type="Path" Display="always" Required="true" Mask="false"/>
