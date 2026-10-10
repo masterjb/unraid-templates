@@ -53,8 +53,8 @@
     shares to x265. Dashboard, encoder benchmarks, profile editor, auto-scan, multi-share.
     Full changelog: https://gitlab.com/MisterJB/x265-butler/-/releases
   </Description>
-  <Version>2.55.0</Version>
-  <Date>2026-10-08</Date>
+  <Version>2.56.0</Version>
+  <Date>2026-10-10</Date>
   <Changes>https://gitlab.com/MisterJB/x265-butler/-/releases</Changes>
   <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="HTTP port for the x265-butler dashboard" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
   <Config Name="Media" Target="/media" Default="/mnt/user/Media" Mode="rw" Description="Your media share. Butler scans it and writes the HEVC file into the same folder as the original, so it needs read and write access. Installs from an older template that use /library keep working unchanged." Type="Path" Display="always" Required="true" Mask="false"/>
@@ -63,4 +63,6 @@
   <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID (typically 99 on unRAID)" Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
   <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID (typically 100 on unRAID)" Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
   <Config Name="TZ" Target="TZ" Default="Europe/Berlin" Mode="" Description="Container timezone" Type="Variable" Display="advanced" Required="false" Mask="false">Europe/Berlin</Config>
+  <Config Name="NVIDIA_VISIBLE_DEVICES" Target="NVIDIA_VISIBLE_DEVICES" Default="" Mode="" Description="Optional, for NVENC only. Set to all (or a GPU UUID) and add --runtime=nvidia under Extra Parameters. Leave empty without an NVIDIA GPU." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="NVIDIA_DRIVER_CAPABILITIES" Target="NVIDIA_DRIVER_CAPABILITIES" Default="compute,video,utility" Mode="" Description="For NVENC only. Keep compute,video,utility; without video every NVENC encode fails. Ignored without --runtime=nvidia." Type="Variable" Display="advanced" Required="false" Mask="false">compute,video,utility</Config>
 </Container>
