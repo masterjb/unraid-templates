@@ -53,8 +53,8 @@
     shares to x265. Dashboard, encoder benchmarks, profile editor, auto-scan, multi-share.
     Full changelog: https://gitlab.com/MisterJB/x265-butler/-/releases
   </Description>
-  <Version>2.56.0</Version>
-  <Date>2026-10-10</Date>
+  <Version>2.57.0</Version>
+  <Date>2026-10-12</Date>
   <Changes>https://gitlab.com/MisterJB/x265-butler/-/releases</Changes>
   <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="HTTP port for the x265-butler dashboard" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
   <Config Name="Media" Target="/media" Default="/mnt/user/Media" Mode="rw" Description="Your media share. Butler scans it and writes the HEVC file into the same folder as the original, so it needs read and write access. Installs from an older template that use /library keep working unchanged." Type="Path" Display="always" Required="true" Mask="false"/>
